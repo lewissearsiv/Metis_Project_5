@@ -42,19 +42,21 @@ def go_back(board_,moves_):
 ###########################################################################
 
 #This function analyses a move and says how many points that move is worth
-def piece_type(square):
+def piece_type(square,board_):
     num = chess.parse_square(square)
-    piece = board.piece_at(num)
+    piece = board_.piece_at(num)
     return piece.piece_type
 
 # Maps the type of piece to the ammount of points it corresponds too.
-point_map = {chess.KING: 1000, chess.QUEEN: 9, chess.ROOK: 5, chess.KNIGHT: 3, chess.BISHOP: 3, chess.PAWN: 1}
-point_map_equals = {'=Q': 9, '=R': 5, '=B': 5, '=N': 5}
+point_map = {chess.KING: 1000, chess.QUEEN: 90, chess.ROOK: 50, chess.KNIGHT: 30, chess.BISHOP: 30, chess.PAWN: 10}
+point_map_equals = {'=Q': 90, '=R': 50, '=B': 30, '=N': 30}
 
 def how_many_points(move,board_):
     
     '''This function takes a move and a board and returns the points developed 
     for just this move'''
+
+    cleaned_move = move.replace('+','')
     
     #obviously if the move is checkmate
     if move.find('#') != -1:
@@ -64,7 +66,7 @@ def how_many_points(move,board_):
     elif move.find('=') != -1 and move.find('x') != -1:
         cleaned_move = move.replace('+','')
         square = cleaned_move[-4]+cleaned_move[-3]
-        piece = piece_type(square)
+        piece = piece_type(square,board_)
         points = point_map[piece]
         new_points_piece = point_map_equals[cleaned_move[-2]+cleaned_move[-1]]
         total_points = points + new_points_piece
@@ -79,20 +81,82 @@ def how_many_points(move,board_):
     
     #If it is a take, how many points?
     elif move.find('x') != -1:
-        cleaned_move = move.replace('+','')
         square = cleaned_move[-2]+cleaned_move[-1]
         try:
-            piece = piece_type(square)
+            piece = piece_type(square,board_)
         #This exception is for the En Passant
         except:
-            return 1
+            return 10
         points = point_map[piece]
         return points
     
-    #Castling is a little better than nothing
-    elif move == '0-0-0' or move == '0-0':
-        return 0.5
+    #Castling is important for long term strategies
+    elif cleaned_move == '0-0-0' or cleaned_move == '0-0':
+        return 4
     
     #Not taking anything is 0 points
     else:
         return 0
+
+
+def how_many_points_center(move,board_,moves_):
+    
+    '''This function takes a move and a board and returns the points developed 
+    for just this move including incentive to control the center'''
+
+    if len(moves_) > 5 or move.find('Q') != -1:
+        return how_many_points(move,board_)
+    #Incentivize controlling the center after the first few special cases
+    center = ['e4','d4','e5','d5']
+    sub_center = ['c3','d3','e3','f3','c6','d6','e6','f6','f5','f4','c5','c4']
+    center_score = 0
+    cleaned_move = move.replace('+','')
+    
+    #obviously if the move is checkmate
+    if move.find('#') != -1:
+        return 99999
+    
+    #This is a pawn getting to the other side with taking a piece
+    elif move.find('=') != -1 and move.find('x') != -1:
+        cleaned_move = move.replace('+','')
+        square = cleaned_move[-4]+cleaned_move[-3]
+        piece = piece_type(square, board_)
+        points = point_map[piece]
+        new_points_piece = point_map_equals[cleaned_move[-2]+cleaned_move[-1]]
+        total_points = points + new_points_piece
+        return total_points
+    
+    #This is a pawn getting to the other side with taking a piece
+    elif move.find('=') != -1:
+        cleaned_move = move.replace('+','')
+        what_piece = cleaned_move[-2]+cleaned_move[-1]
+        points = point_map_equals[what_piece]
+        return points
+    
+    #If it is a take, how many points?
+    elif move.find('x') != -1:
+        square = cleaned_move[-2]+cleaned_move[-1]
+        if square in center:
+            center_score += 2
+        if square in sub_center:
+            center_score += 1
+        try:
+            piece = piece_type(square, board_)
+        #This exception is for the En Passant
+        except:
+            return 10 + center_score
+        points = point_map[piece]
+        return points + center_score
+    
+    #Castling is important for long term strategies
+    elif cleaned_move == '0-0-0' or cleaned_move == '0-0':
+        return 4
+    
+    #Not taking anything is 0 points
+    else:
+        square = cleaned_move[-2]+cleaned_move[-1]
+        if square in center:
+            center_score += 2
+        if square in sub_center:
+            center_score += 1
+        return 0 + center_score

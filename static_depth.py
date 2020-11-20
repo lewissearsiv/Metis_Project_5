@@ -141,3 +141,67 @@ def computer_move_depth_3(board_,moves_):
         print(board_.result())
         print(moves_)
     return board_
+
+#This version takes the center into account
+def computer_move_depth_3_with_center(board_,moves_):
+
+    
+    #Extract all possible moves at depth one
+    all_moves_depth_1 = get_possible_moves(board_)
+
+    #This will hold net points per move
+    move_points = []
+    
+    for move_1 in all_moves_depth_1:
+        
+        if move_1.find('#') != -1:
+            board_.push_san(move_1)
+            moves_.append(move_1)
+            print('Game Over!')
+            print(board_.result())
+            print(moves_)
+            return board_
+        
+        #This is the points from the initial move
+        first_move_points = how_many_points_center(move_1, board_,moves_)
+        
+        #Now make the move and calculate the max points for the next two moves
+        board_.push_san(move_1)
+        all_moves_depth_2 = get_possible_moves(board_)
+        if board_.is_game_over():
+            print('Game Over!')
+            print(board_.result())
+            print(moves_)
+            return board_
+        
+        
+        #This quantify's the response to all moves
+        response_move_points = []
+        for move_2 in all_moves_depth_2:
+            second_move_points = how_many_points_center(move_2, board_,moves_)
+            board_.push_san(move_2)
+            all_moves_depth_3 = get_possible_moves(board_)
+            points_3 = [how_many_points_center(new_move,board_,moves_) for new_move in all_moves_depth_3]
+            response_move_points.append(second_move_points - max(points_3))
+            #revert board
+            board_.pop()
+        
+        #Aggregate points change for current move
+        retaliation_points = max(response_move_points)
+        net_points = first_move_points - retaliation_points
+        move_points.append(net_points)
+        #revert board
+        board_.pop()
+        
+    
+    #Make the move here
+    max_indices = [i for i, val in enumerate(move_points) if val == max(move_points)]
+    best_moves = [all_moves_depth_1[i] for i in max_indices]
+    final_move = random.choice(best_moves)
+    board_.push_san(final_move)
+    moves_.append(final_move)
+    if board_.is_game_over():
+        print('Game Over!')
+        print(board_.result())
+        print(moves_)
+    return board_
