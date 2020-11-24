@@ -99,13 +99,11 @@ def how_many_points(move,board_):
         return 0
 
 
-def how_many_points_center(move,board_,moves_):
+def how_many_points_center(move,board_):
     
     '''This function takes a move and a board and returns the points developed 
     for just this move including incentive to control the center'''
-
-    if len(moves_) > 5 or move.find('Q') != -1:
-        return how_many_points(move,board_)
+    
     #Incentivize controlling the center after the first few special cases
     center = ['e4','d4','e5','d5']
     sub_center = ['c3','d3','e3','f3','c6','d6','e6','f6','f5','f4','c5','c4']
