@@ -44,24 +44,8 @@ def moves_n_deep(board_, n):
 #######################################################################################
 #######################################################################################
 
-def n_moves_points(moves_, board_):
 
-    #Initialize points
-    points = 0
-    
-    for i, move in enumerate(moves_):
-        #This gives the min/max sign
-        min_or_max = (-1)**i
-        points += (how_many_points(move, board_) * min_or_max)
-        board_.push_san(move)
 
-    #Reset the board
-    i = 0 
-    while i < len(moves_):
-        board_.pop()
-        i += 1
-
-    return points
 
 ####################################################################################
 #####This function returns the point values of every possible move with depth n#####
