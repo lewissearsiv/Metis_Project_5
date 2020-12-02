@@ -158,3 +158,69 @@ def how_many_points_center(move,board_):
         if square in sub_center:
             center_score += 1
         return 0 + center_score
+
+###########################################################################
+###########################################################################
+#One hot encoding a board
+chess_dict = {
+    'p' : [1,0,0,0,0,0,0,0,0,0,0,0],
+    'P' : [0,0,0,0,0,0,1,0,0,0,0,0],
+    'n' : [0,1,0,0,0,0,0,0,0,0,0,0],
+    'N' : [0,0,0,0,0,0,0,1,0,0,0,0],
+    'b' : [0,0,1,0,0,0,0,0,0,0,0,0],
+    'B' : [0,0,0,0,0,0,0,0,1,0,0,0],
+    'r' : [0,0,0,1,0,0,0,0,0,0,0,0],
+    'R' : [0,0,0,0,0,0,0,0,0,1,0,0],
+    'q' : [0,0,0,0,1,0,0,0,0,0,0,0],
+    'Q' : [0,0,0,0,0,0,0,0,0,0,1,0],
+    'k' : [0,0,0,0,0,1,0,0,0,0,0,0],
+    'K' : [0,0,0,0,0,0,0,0,0,0,0,1],
+    '.' : [0,0,0,0,0,0,0,0,0,0,0,0],
+}
+alpha_dict = {
+    'a' : [0,0,0,0,0,0,0],
+    'b' : [1,0,0,0,0,0,0],
+    'c' : [0,1,0,0,0,0,0],
+    'd' : [0,0,1,0,0,0,0],
+    'e' : [0,0,0,1,0,0,0],
+    'f' : [0,0,0,0,1,0,0],
+    'g' : [0,0,0,0,0,1,0],
+    'h' : [0,0,0,0,0,0,1],
+}
+number_dict = {
+    1 : [0,0,0,0,0,0,0],
+    2 : [1,0,0,0,0,0,0],
+    3 : [0,1,0,0,0,0,0],
+    4 : [0,0,1,0,0,0,0],
+    5 : [0,0,0,1,0,0,0],
+    6 : [0,0,0,0,1,0,0],
+    7 : [0,0,0,0,0,1,0],
+    8 : [0,0,0,0,0,0,1],
+}
+
+def make_matrix(board): 
+    fen = board.epd()
+    outer_list = []  
+    pieces = fen.split(" ", 1)[0]
+    rows = pieces.split("/")
+    for row in rows:
+        inner_list = []  
+        for entry in row:
+            if entry.isdigit():
+                for i in range(0, int(entry)):
+                    inner_list.append('.')
+            else:
+                inner_list.append(entry)
+        outer_list.append(inner_list)
+    return outer_list
+def translate(matrix,chess_dict):
+    rows = []
+    for row in matrix:
+        terms = []
+        for term in row:
+            terms.append(chess_dict[term])
+        rows.append(terms)
+    return rows
+
+def encode_board(board):
+    return translate(make_matrix(board),chess_dict)

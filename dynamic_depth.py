@@ -78,7 +78,7 @@ def move_points_depth_n(board_,quantifier,n):
 #uses the above to make move
 def comp_make_move(board_,moves_,n):
     possible_moves = get_possible_moves(board_)
-    if len(moves_) < 15:    
+    if len(moves_) < 8:    
         points = move_points_depth_n(board_,how_many_points_center, n)
     else:    
         points = move_points_depth_n(board_,how_many_points, n)
