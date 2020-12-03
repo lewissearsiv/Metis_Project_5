@@ -1,5 +1,8 @@
 import chess
 import random
+import numpy as np
+import pandas as pd
+import tensorflow
 
 '''These are some intro functions to get started'''
 #First lets write a function that gives us every moves
@@ -213,7 +216,8 @@ def make_matrix(board):
                 inner_list.append(entry)
         outer_list.append(inner_list)
     return outer_list
-def translate(matrix,chess_dict):
+
+def translate(board, matrix,chess_dict):
     rows = []
     for row in matrix:
         terms = []
@@ -222,5 +226,84 @@ def translate(matrix,chess_dict):
         rows.append(terms)
     return rows
 
-def encode_board(board):
-    return translate(make_matrix(board),chess_dict)
+white_to_move = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+
+black_to_move = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+
+def encode_board(board_):
+    encoded = translate(board_, make_matrix(board_),chess_dict)
+
+    #This includes the turn
+    if board_.turn:
+        encoded.append(white_to_move)
+    else:
+        encoded.append(black_to_move)
+    return encoded 
+    
+
+#Want to do this!!! May be too hard
+def encode_move_rigorous(entry):
+    try:
+        term = entry
+        term = term.replace('x','')
+        term = term.replace('#','')
+        term = term.replace('+','')
+        if len(term) == 2:
+            piece = 'p' 
+        else:
+            piece = term[0]
+        alpha = term[-2]
+        number = term[-1]
+        return [chess_dict[piece],alpha_dict[alpha],number_dict[int(number)]]
+    except:
+        pass
+
+def encode_move_easy(entry):
+    if entry == 'O-O':
+        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    if entry == 'O-O-O':
+        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    try:
+        term = entry
+        term = term.replace('x','')
+        term = term.replace('#','')
+        term = term.replace('+','')
+        if len(term) == 2:
+            piece = 'p' 
+        else:
+            piece = term[0]
+        alpha = term[-2]
+        number = term[-1]
+        p = chess_dict[piece]
+        a = alpha_dict[alpha]
+        n = number_dict[int(number)]
+        output = []
+        for x in p:
+            output.append(x)
+        for x in a:
+            output.append(x)
+        for x in n:
+            output.append(x)
+        return output
+    except:
+        return 'Weird Move'
+
+def cnn_predict(cnn_model,board_):
+    encoded_board = encode_board(board_)
+    board_tensor = tensorflow.expand_dims(np.array(encoded_board),0)
+    prediction = cnn_model.predict(board_tensor)
+    return prediction
