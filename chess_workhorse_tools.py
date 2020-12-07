@@ -20,7 +20,7 @@ def computer_random_move(board_,moves_):
     moves_.append(move)
     if board_.is_game_over():
             print('Game Over!')
-            print(moves)
+            print(moves_)
     return board_
 
 #This is how you make a move and reveal a board
@@ -33,9 +33,14 @@ def my_move(move,board_,moves_):
         moves_.append(move)
         if board_.is_game_over():
             print('Game Over!')
-            print(board.result())
-            print(moves)
+            print(board_.result())
+            print(moves_)
     return board_
+
+def board_svg(board_,size_):
+    '''Creates a board SVG because I keep forgetting the command. Use size 250 to start.'''
+    return chess.svg.board(board_,size=size_)
+
 
 #Go back a move on the board and remove a move from the ledger
 def go_back(board_,moves_):
@@ -273,19 +278,25 @@ def encode_move_rigorous(entry):
         pass
 
 def encode_move_easy(entry):
-    if entry == 'O-O':
+    if entry[0] == 'O-O':
         return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    if entry == 'O-O-O':
+    if entry[0] == 'O-O-O':
         return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     try:
-        term = entry
+        term = entry[0]
         term = term.replace('x','')
         term = term.replace('#','')
         term = term.replace('+','')
         if len(term) == 2:
-            piece = 'p' 
+            if entry[1] % 2 == 0:
+                piece = 'p'
+            if entry[1] % 2 == 1:
+                piece = 'P'
         else:
-            piece = term[0]
+            if entry[1] % 2 == 0:
+                piece = term[0].lower()
+            if entry[1] % 2 == 1:
+                piece = term[0].upper()
         alpha = term[-2]
         number = term[-1]
         p = chess_dict[piece]
@@ -301,9 +312,70 @@ def encode_move_easy(entry):
         return output
     except:
         return 'Weird Move'
+###########################################################################
+###########################################################################
+#Dealing with cnn output
+
+chess_dict_inv = {
+    '[1,0,0,0,0,0,0,0,0,0,0,0]' : 'p',
+    '[0,0,0,0,0,0,1,0,0,0,0,0]' : 'P',
+    '[0,1,0,0,0,0,0,0,0,0,0,0]' : 'n',
+    '[0,0,0,0,0,0,0,1,0,0,0,0]' : 'N',
+    '[0,0,1,0,0,0,0,0,0,0,0,0]' : 'b',
+    '[0,0,0,0,0,0,0,0,1,0,0,0]' : 'B',
+    '[0,0,0,1,0,0,0,0,0,0,0,0]' : 'r',
+    '[0,0,0,0,0,0,0,0,0,1,0,0]' : 'R',
+    '[0,0,0,0,1,0,0,0,0,0,0,0]' : 'q',
+    '[0,0,0,0,0,0,0,0,0,0,1,0]' : 'Q',
+    '[0,0,0,0,0,1,0,0,0,0,0,0]' : 'k',
+    '[0,0,0,0,0,0,0,0,0,0,0,1]' : 'K',
+    '[0,0,0,0,0,0,0,0,0,0,0,0]' : '.',
+}
+alpha_dict_inv = {
+    '[0,0,0,0,0,0,0]' : 'a',
+    '[1,0,0,0,0,0,0]' : 'b',
+    '[0,1,0,0,0,0,0]' : 'c',
+    '[0,0,1,0,0,0,0]' : 'd',
+    '[0,0,0,1,0,0,0]' : 'e',
+    '[0,0,0,0,1,0,0]' : 'f',
+    '[0,0,0,0,0,1,0]' : 'g',
+    '[0,0,0,0,0,0,1]' : 'h',
+}
+number_dict_inv = {
+    '[0,0,0,0,0,0,0]' : 1,
+    '[1,0,0,0,0,0,0]' : 2,
+    '[0,1,0,0,0,0,0]' : 3,
+    '[0,0,1,0,0,0,0]' : 4,
+    '[0,0,0,1,0,0,0]' : 5,
+    '[0,0,0,0,1,0,0]' : 6,
+    '[0,0,0,0,0,1,0]' : 7,
+    '[0,0,0,0,0,0,1]' : 8,
+}
+
+def max_entry_one_hot(list_):
+    new_list = []
+    for x in list_:
+        if x == max(list_):
+            new_list.append(1)
+        else:
+            new_list.append(0)
+    return new_list
+    
+def move_decoder(move):
+    move_piece = move[:12]
+    move_alpha = move[12:19]
+    move_number = move[19:]
+    move_pan =  [move_piece, move_alpha, move_number]
+    return [max_entry_one_hot(move_x) for move_x in move_pan]
 
 def cnn_predict(cnn_model,board_):
     encoded_board = encode_board(board_)
     board_tensor = tensorflow.expand_dims(np.array(encoded_board),0)
     prediction = cnn_model.predict(board_tensor)
-    return prediction
+    formatted_prediction = list(prediction[0])
+    if formatted_prediction == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]:
+        return 'Castle'
+    tensor = move_decoder(formatted_prediction)
+    string_tensor = [str(entry).replace(' ', '') for entry in tensor]
+    move = chess_dict_inv[string_tensor[0]] + alpha_dict_inv[string_tensor[1]] + str(number_dict_inv[string_tensor[2]])
+    return move
