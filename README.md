@@ -1,2 +1,5 @@
 # Metis_Project_5
-Passion Project
+
+This repository contains work for my passion project, DeepLew, a modern chess engine and homage to IBM's Deep Blue. Our workflow is fairly straightforward: we follow the general history of chess engines starting with minimax algorithms at variable depth and eventually incorporating neural networks for a more modern approach. A simple walkthrough is shown in *chess_walkthrough.ipynb*.
+
+In py_files, you can find all sorts of functions that provide the workhorse functions for both iterations of this project. Most importantly, in *chess_workhorse_tools.py* there are functions that gather possible moves, designate point values to moves given a current board start. There are also functions that facilitate the design of our convolutional neural network that encode the board, moves, and interpret the actions the cnn predicts. In the *dynamic_depth.py* file, there are functions that use recursion to calculate the branches of possible moves given a board. These are the tools for the minimax algorithm.  
